@@ -1,0 +1,4 @@
+; $Id$
+name = Tweet Button
+description = Adds the tweet button to your site.
+core = 6.x

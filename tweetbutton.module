@@ -1,0 +1,20 @@
+<?php
+
+function tweetbutton_init(){
+  drupal_set_html_head('<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>');
+}
+
+function tweetbutton_link($type, $node = NULL, $teaser = FALSE) {
+  $links = array();
+
+  if ($type == 'node' && $teaser == 0) {
+    $links['tweetbutton'] = array(
+      'title' => 'Tweet',
+      'href' => 'http://twitter.com/share',
+      'attributes' => array('class' => 'twitter-share-button','data-count' => 'horizontal'),
+    );
+  }
+
+  return $links;
+}
+
