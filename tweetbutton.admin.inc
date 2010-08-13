@@ -16,7 +16,7 @@ function tweetbutton_admin_settings() {
       'horizontal' => t('Horizontal Count'),
       'none'   => t('No count'),
     ),
-    '#default_value' => variable_get('tweetbutton_button', 'vcount'),
+    '#default_value' => variable_get('tweetbutton_button', 'vertical'),
     '#id' => 'tweetbutton-button',
   );
   
@@ -25,14 +25,15 @@ function tweetbutton_admin_settings() {
     '#type'          => 'textfield',
     '#title'         => t('Tweet Text'),
     '#default_value' => variable_get('tweetbutton_tweet_text'),
-    '#description'   => t('This is the text that people will include in their Tweet when they share from your website. If left empty title will be used. Available tokens are: !title'),
+    '#description'   => t('This is the text that people will include in their Tweet when they share from your website. If left empty title will be used. ' .
+      'Available tokens are: !title, !author_name, !node_type, !node_url (NOTE: Twitter will generate short url for the node)'),
   );
   
   $form['button']['tweetbutton_tweet_url'] = array(
     '#type'          => 'textfield',
     '#title'         => t('URL'),
     '#default_value' => variable_get('tweetbutton_tweet_url'),
-    '#description'   => t('Leave blank for using the URL for the page the button is on.'),
+    '#description'   => t('Leave blank for using the URL of the node the button is on.'),
   );
 
   $form['button']['tweetbutton_language'] = array(
@@ -87,7 +88,7 @@ function tweetbutton_admin_settings() {
     '#markup' => $markup, 
     '#attached' => array(
       'js' => array(
-        drupal_get_path('module', 'tweetbutton').'/tweetbutton.js',
+  //       drupal_get_path('module', 'tweetbutton').'/tweetbutton.js',
         'http://platform.twitter.com/widgets.js',
       ),
       'css' => array(drupal_get_path('module', 'tweetbutton').'/tweetbutton.css'),
@@ -112,10 +113,22 @@ function tweetbutton_node_settings() {
     '#default_value' => variable_get('tweetbutton_node_types', array('article')),
   );
   
+  $form['tweetbutton_node_location'] = array(
+    '#type'    => 'checkboxes',
+    '#title'   => t('Locations'),
+    '#options' => array(
+      'full'    => t('Full View'),
+      'teaser'  => t('Teasers'),
+    ),
+    '#default_value' => variable_get('tweetbutton_node_location', array('full')),
+  );
+  
+  
   $form['tweetbutton_node_weight'] = array(
-    '#type' => 'weight',
-    '#title' => t('Weight'),
-    '#default_value' => variable_get('tweetbutton_node_weight', 0),
+    '#type'          => 'weight',
+    '#title'         => t('Weight'),
+    '#default_value' => variable_get('tweetbutton_node_weight', -5),
+    '#description'   => t('Heavier weight will sink button to bottom on node view'),
   );
   
   return system_settings_form($form);
