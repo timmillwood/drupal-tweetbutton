@@ -80,8 +80,8 @@ function tweetbutton_permission() {
  * Implementation of hook_node_view()
  */
 function tweetbutton_node_view($node, $view_mode) {
-  if (in_array($node->type, variable_get('tweetbutton_node_types', array('article'))) 
-    && in_array($view_mode, variable_get('tweetbutton_node_location', array('full')))
+  if (in_array($node->type, variable_get('tweetbutton_node_types', array('article')), TRUE) 
+    && in_array($view_mode, variable_get('tweetbutton_node_location', array('full')), TRUE)
     && user_access('access tweetbutton')) {
     
     drupal_add_js('http://platform.twitter.com/widgets.js'); 
@@ -93,12 +93,13 @@ function tweetbutton_node_view($node, $view_mode) {
       '!author_name'  => $node->name,
       '!node_type'    => $node->type,
       '!node_url'     => url('node/'.$node->nid, array('absolute' => TRUE)),
+      '!view_mode'    => $view_mode,
     );
     
 	  $node->content['tweetbutton'] = array(
       '#tokens'   => $token_replacements,
       '#weight'   => variable_get('tweetbutton_node_weight', -5),
-      '#theme'    => 'tweetbutton_display',
+      '#theme'    => 'tweetbutton_display__'.$node->type,
     );
   }
 }
@@ -129,9 +130,11 @@ function tweetbutton_get_attributes($tokens = array()) {
 }
 
 function theme_tweetbutton_display($variables) {
-  $attributes = tweetbutton_get_attributes($variables['tokens']);
+  $tokens = $variables['tokens'];
+  $attributes = tweetbutton_get_attributes($tokens);
   
   $link = '<div class="tweetbutton"><a href="http://twitter.com/share" class="twitter-share-button" ' .
     drupal_attributes($attributes). '>Tweet</a></div>';
+
   return $link;
 }

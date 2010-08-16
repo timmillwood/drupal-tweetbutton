@@ -113,13 +113,17 @@ function tweetbutton_node_settings() {
     '#default_value' => variable_get('tweetbutton_node_types', array('article')),
   );
   
+  $options = array();
+  $entity_info = entity_get_info('node');
+  $view_modes = $entity_info['view modes'];
+  foreach($view_modes as $name => $info) {
+    $options[$name] = $info['label'];
+  }
+  
   $form['tweetbutton_node_location'] = array(
     '#type'    => 'checkboxes',
     '#title'   => t('Locations'),
-    '#options' => array(
-      'full'    => t('Full View'),
-      'teaser'  => t('Teasers'),
-    ),
+    '#options' => $options,
     '#default_value' => variable_get('tweetbutton_node_location', array('full')),
   );
   
