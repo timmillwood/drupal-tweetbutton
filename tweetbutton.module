@@ -2,28 +2,27 @@
 // $Id$
 
 /**
- * Implementation of hook_help()
+ * Implementation of hook_help().
  */
 function tweetbutton_help($path, $arg) {
-  $output = NULL;
-  switch($path) {
+  switch ($path) {
     case 'admin/help#tweetbutton':
       return t('This button allows your website to let people share content on Twitter without having to leave the page. Promote strategic Twitter accounts at the same time while driving traffic to your website.');
   }
 }
 
 /**
- * Implementation of hook_menu()
- */ 
+ * Implementation of hook_menu().
+ */
 function tweetbutton_menu() {
   $items = array();
-  
+
   $items['admin/settings/tweetbutton/list'] = array(
     'title'            => 'Tweetbutton Settings',
     'type'             => MENU_DEFAULT_LOCAL_TASK,
     'weight'           => -1,
   );
-  
+
   $items['admin/settings/tweetbutton'] = array(
     'title'            => 'Tweetbutton Settings',
     'description'      => 'Configure tweetbutton settings',
@@ -33,7 +32,7 @@ function tweetbutton_menu() {
     'file'             => 'tweetbutton.admin.inc',
     'weight'           => 0,
   );
-  
+
   $items['admin/settings/tweetbutton/node'] = array(
     'title'            => 'Tweetbutton Node Settings',
     'description'      => 'Configure tweetbutton for nodes',
@@ -44,12 +43,12 @@ function tweetbutton_menu() {
     'weight'           => 1,
     'type'             => MENU_LOCAL_TASK,
   );
-  
+
   return $items;
 }
 
 /**
- * Implementation of hook_theme()
+ * Implementation of hook_theme().
  */
 function tweetbutton_theme() {
   return array(
@@ -60,7 +59,7 @@ function tweetbutton_theme() {
 }
 
 /**
- * Implementation of hook_permission()
+ * Implementation of hook_permission().
  */
 function tweetbutton_perm() {
   return array(
@@ -69,34 +68,33 @@ function tweetbutton_perm() {
   );
 }
 
-
 /**
- * Implementation of hook_nodeapi()
+ * Implementation of hook_nodeapi().
  */
 function tweetbutton_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  if($a3) {
+  if ($a3) {
     $node_location = 'teaser';
   }
   else {
     $node_location = 'full';
   }
 
-  if (in_array($node->type, variable_get('tweetbutton_node_types', array('article')), TRUE) 
+  if (in_array($node->type, variable_get('tweetbutton_node_types', array('article')), TRUE)
     && in_array($node_location, variable_get('tweetbutton_node_location', array('full')), TRUE)
     && user_access('access tweetbutton')
     && $op == 'view') {
-    
-    drupal_set_html_head('<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>'); 
-    drupal_add_css(drupal_get_path('module', 'tweetbutton').'/tweetbutton.css');
-    
+
+    drupal_set_html_head('<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>');
+    drupal_add_css(drupal_get_path('module', 'tweetbutton') .'/tweetbutton.css');
+
     // @todo: Add support for token replacements
     $token_replacements = array(
       '!title'        => $node->title,
       '!author_name'  => $node->name,
       '!node_type'    => $node->type,
-      '!node_url'     => url('node/'.$node->nid, array('absolute' => TRUE)),
+      '!node_url'     => url('node/'. $node->nid, array('absolute' => TRUE)),
     );
-    
+
     $node->content['tweetbutton'] = array(
       '#tokens'   => $token_replacements,
       '#weight'   => variable_get('tweetbutton_node_weight', -5),
@@ -105,20 +103,19 @@ function tweetbutton_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   }
 }
 
-
 function tweetbutton_get_attributes($tokens = array()) {
-  // If data-url is not set then use node url, in teaser mode we want to set this parameter 
-  // to fetch different counters for each node
+  // If data-url is not set then use node url, in teaser mode we want to set this parameter
+  // to fetch different counters for each node.
   $node_url    = isset($tokens['!node_url'])? $tokens['!node_url']: '';
-  
+
   $button_type = variable_get('tweetbutton_button', 'vertical');
-  $tweet_text  = variable_get('tweetbutton_tweet_text','');
-  $tweet_url   = variable_get('tweetbutton_tweet_url','');
-  $language    = variable_get('tweetbutton_language','');
-  $account     = variable_get('tweetbutton_account','');
-  $rel_account = variable_get('tweetbutton_rel_account_name','');
-  $rel_desc    = variable_get('tweetbutton_rel_account_description','');
-  
+  $tweet_text  = variable_get('tweetbutton_tweet_text', '');
+  $tweet_url   = variable_get('tweetbutton_tweet_url', '');
+  $language    = variable_get('tweetbutton_language', '');
+  $account     = variable_get('tweetbutton_account', '');
+  $rel_account = variable_get('tweetbutton_rel_account_name', '');
+  $rel_desc    = variable_get('tweetbutton_rel_account_description', '');
+
   $attributes =  array(
     'data-count'   => $button_type,
     'data-via'     => $account,
@@ -132,8 +129,8 @@ function tweetbutton_get_attributes($tokens = array()) {
 
 function theme_tweetbutton_display($variables) {
   $attributes = tweetbutton_get_attributes($variables['#tokens']);
-  
-  $link = '<div class="tweetbutton"><a href="http://twitter.com/share" class="twitter-share-button" ' .
-    drupal_attributes($attributes). '>Tweet</a></div>';
+
+  $link = '<div class="tweetbutton"><a href="http://twitter.com/share" class="twitter-share-button" '.
+    drupal_attributes($attributes) .'>Tweet</a></div>';
   return $link;
 }
