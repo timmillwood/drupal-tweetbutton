@@ -1,4 +1,4 @@
-; $Id$
 name = Tweetbutton
 description = Add tweet button to  your website without having to leave the page
 core = 6.x
+dependencies[] = token
