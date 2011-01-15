@@ -11,7 +11,7 @@ class views_handler_field_tweetbutton extends views_handler_field {
     
     $options['label'] = array('default' => $this->definition['title'], 'translatable' => TRUE);
     $options['tweetbutton_button'] = array('default' => 'vertical');
-    $options['tweetbutton_text']   = array('default' => variable_get('tweetbutton_tweet_text','[title]')); 
+    $options['tweetbutton_text']   = array('default' => variable_get('tweetbutton_tweet_text','')); 
     return $options;
   }
   

@@ -125,7 +125,7 @@ function tweetbutton_get_attributes($entity = NULL, $options = array()) {
 
   $default_option = array(
     'type'        => variable_get('tweetbutton_button', 'vertical'),
-    'text'        => variable_get('tweetbutton_tweet_text', '[title]'),
+    'text'        => variable_get('tweetbutton_tweet_text', ''),
     'language'    => variable_get('tweetbutton_language',''),
     'account'     => variable_get('tweetbutton_account',''),
     'rel_account' => variable_get('tweetbutton_rel_account_name',''),
@@ -136,14 +136,16 @@ function tweetbutton_get_attributes($entity = NULL, $options = array()) {
   
   $options += $default_option;
   
+  global $language;
+  
   $attributes =  array(
     'data-count'   => $options['type'],
     'data-via'     => $options['account'],
     'data-related' => $options['rel_account'] . ':' . $options['rel_desc'],
-    'data-text'    => token_replace($options['text'], $options['entity_type'], $entity),
+    'data-text'    => $options['text']? token_replace($options['text'], $options['entity_type'], $entity): '',
     'data-counturl'=> $options['url'],
     'data-url'     => $options['url'],
-    'data-lang'    => $options['language'],
+    'data-lang'    => $options['language'] == 'auto' ? $language->language : $options['language'],
   );
   
   return $attributes;

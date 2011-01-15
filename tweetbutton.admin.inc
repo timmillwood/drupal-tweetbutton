@@ -24,7 +24,7 @@ function tweetbutton_admin_settings() {
   $form['button']['tweetbutton_tweet_text'] = array(
     '#type'          => 'textfield',
     '#title'         => t('Tweet Text'),
-    '#default_value' => variable_get('tweetbutton_tweet_text','[title]'),
+    '#default_value' => variable_get('tweetbutton_tweet_text',''),
     '#description'   => t('This is the text that people will include in their Tweet when they share from your website. If left blank page title will be used. NOTE: Twitter will generate short url.'),
   );
   
@@ -41,14 +41,15 @@ function tweetbutton_admin_settings() {
   
   $form['button']['tweetbutton_language'] = array(
     '#title' => t('Language'),
-    '#description' => t('This is the language that the button will render in on your website. People will see the Tweet dialog in their selected language for Twitter.com.'),
-    '#type' => 'select',
+    '#description' => t('This is the language that the button will render in on your website. People will see the Tweet dialog in their selected language for Twitter.com. If <strong>all</strong> of the languages on your site are available in this list, you can choose "Automatic."'),    '#type' => 'select',
     '#options' => array(
       'en' => t('English'),
       'fr' => t('French'),
       'de' => t('German'),
       'es' => t('Spanish'),
       'ja' => t('Japanese'),
+      'auto' => t('Automatic'),
+  
     ),
     '#default_value' => variable_get('tweetbutton_language',''),
   );
