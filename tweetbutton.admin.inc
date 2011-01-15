@@ -24,8 +24,8 @@ function tweetbutton_admin_settings() {
   $form['button']['tweetbutton_tweet_text'] = array(
     '#type'          => 'textfield',
     '#title'         => t('Tweet Text'),
-    '#default_value' => variable_get('tweetbutton_tweet_text',''),
-    '#description'   => t('This is the text that people will include in their Tweet when they share from your website. If left empty title will be used. NOTE: Twitter will generate short url.'),
+    '#default_value' => variable_get('tweetbutton_tweet_text','[title]'),
+    '#description'   => t('This is the text that people will include in their Tweet when they share from your website. If left blank page title will be used. NOTE: Twitter will generate short url.'),
   );
   
   $form['button']['tweetbutton_text'] = array(

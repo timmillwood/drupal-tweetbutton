@@ -125,38 +125,36 @@ function tweetbutton_get_attributes($entity = NULL, $options = array()) {
 
   $default_option = array(
     'type'        => variable_get('tweetbutton_button', 'vertical'),
-    'text'        => variable_get('tweetbutton_tweet_text',''),
+    'text'        => variable_get('tweetbutton_tweet_text', '[title]'),
     'language'    => variable_get('tweetbutton_language',''),
     'account'     => variable_get('tweetbutton_account',''),
     'rel_account' => variable_get('tweetbutton_rel_account_name',''),
     'rel_desc'    => variable_get('tweetbutton_rel_account_description',''),
     'entity_type' => 'node',
+    'url'         => url('node/' . $entity->nid, array('absolute' => TRUE)), 
   );
   
   $options += $default_option;
+  
   $attributes =  array(
     'data-count'   => $options['type'],
     'data-via'     => $options['account'],
     'data-related' => $options['rel_account'] . ':' . $options['rel_desc'],
     'data-text'    => token_replace($options['text'], $options['entity_type'], $entity),
-    'data-url'     => $options['url']? $options['url']: url('node/' . $entity->nid, array('absolute' => TRUE)),
+    'data-counturl'=> $options['url'],
+    'data-url'     => $options['url'],
     'data-lang'    => $options['language'],
   );
-
+  
   return $attributes;
 }
 
 
-function theme_tweetbutton_display($entity, $options = array()) {
-  static $called;
-  $attributes = tweetbutton_get_attributes($entity, $options);
+function theme_tweetbutton_display($entity_id, $options = array()) {
+  global $_tweetbutton_init;
+  $_tweetbutton_init = TRUE;
   
-  if (!$called) {
-    // @TODO: Store this js file locally
-    drupal_set_html_head('<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>'); 
-    drupal_add_css(drupal_get_path('module', 'tweetbutton').'/tweetbutton.css');
-    $called = 1;
-  }
+  $attributes = tweetbutton_get_attributes($entity_id, $options);
   
   $link = '<div class="tweetbutton"><a href="http://twitter.com/share" class="twitter-share-button" ' .
     drupal_attributes($attributes). '>Tweet</a></div>';
@@ -176,7 +174,19 @@ function tweetbutton_views_api() {
 function tweetbutton_views_handlers() {
   return array(
     'handlers' => array(
-      'views_handler_field_tweetbutton' => array(
+      'views_handler_field_tweetbutton_node' => array(
+         'parent' => 'views_handler_field_tweetbutton',
+         'file'   => 'tweetbutton_views_field_handlers.inc',
+       ),
+       'views_handler_field_tweetbutton_user' => array(
+         'parent' => 'views_handler_field_tweetbutton',
+         'file'   => 'tweetbutton_views_field_handlers.inc',
+       ),
+       'views_handler_field_tweetbutton_taxonomy' => array(
+         'parent' => 'views_handler_field_tweetbutton',
+         'file'   => 'tweetbutton_views_field_handlers.inc',
+       ),
+       'views_handler_field_tweetbutton' => array(
          'parent' => 'views_handler_field',
          'file'   => 'tweetbutton_views_field_handlers.inc',
        ),
@@ -200,3 +210,17 @@ function tweetbutton_content_extra_fields($type) {
   }
 }
 
+/**
+ * Implementation of hook_footer()
+ */
+function tweetbutton_footer($main = 0) {
+  global $_tweetbutton_init;
+  
+  if (!$_tweetbutton_init) {
+    return;
+  }
+  
+  $output = '<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>'; 
+  
+  return $output;
+}
