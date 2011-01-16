@@ -12,5 +12,4 @@ function tweetbutton_uninstall() {
   variable_del('tweetbutton_node_weight');
   variable_del('tweetbutton_node_types');
   variable_del('tweetbutton_node_location');  
-    
 }

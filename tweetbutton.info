@@ -2,8 +2,5 @@
 name = Tweetbutton
 description = Add tweet button to  your website without having to leave the page
 core = 7.x
-files[] = tweetbutton.module
-files[] = tweetbutton.install
-files[] = tweetbutton.admin.inc
-files[] = tweetbutton.css
-configure = admin/configure/tweetbutton
+dependencies[] = token
+configure = admin/config/services/tweetbutton

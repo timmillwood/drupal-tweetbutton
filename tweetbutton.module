@@ -9,7 +9,15 @@ function tweetbutton_help($path, $arg) {
   switch($path) {
   	case 'admin/help#tweetbutton':
       $output = 'This button allows your website to let people share content on Twitter without having to leave the page. Promote strategic Twitter accounts at the same time while driving traffic to your website.';
+      break;
+    case 'admin/config/services/tweetbutton':
+      $output = '<p>' . t('This button allows your website to let people share content on Twitter without having to leave the page. Promote strategic Twitter accounts at the same time while driving traffic to your website. These are the general configuration options for the button. Make sure to check the Node Settings to set where the button will appear.') . '</p>';
+      break;
+    case 'admin/config/services/tweetbutton/node':
+      $output = '<p>' . t('Select the node types and location on which the Tweet Button will appear.') . '</p>';
+      break;
   }
+  return $output;
 }
 
 /**
@@ -17,37 +25,39 @@ function tweetbutton_help($path, $arg) {
  */ 
 function tweetbutton_menu() {
 	$items = array();
-  
-  $items['admin/config/tweetbutton'] = array(
+
+  $items['admin/config/services/tweetbutton'] = array(
     'title'            => 'Tweet Button',
-    'description'      => 'Tweet Button Settings',
-    'page callback'    => 'system_admin_menu_block_page',
+    'description'      => 'Configure the look and behavior of the Tweet Button appears on the site.',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('tweetbutton_admin_settings'),
     'access arguments' => array('administer tweetbutton'),
-    'file'             => 'system.admin.inc',
-    'file path'        => drupal_get_path('module', 'system'),
-    'position'         => 'right',
+    'file'             => 'tweetbutton.admin.inc',
+    'type'             => MENU_NORMAL_ITEM,
   );
-  
-  $items['admin/config/tweetbutton/settings'] = array(
-    'title'            => 'Tweet Button Settings',
-    'description'      => 'Configure tweet button settings',
+
+  $items['admin/config/services/tweetbutton/settings'] = array(
+    'title'            => 'General Settings',
+    'description'      => 'Change the look and behavior of the Tweet Button.',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('tweetbutton_admin_settings'),
     'access arguments' => array('administer tweetbutton'),
     'file'             => 'tweetbutton.admin.inc',
     'weight'           => 0,
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
   );
-  
-  $items['admin/config/tweetbutton/node'] = array(
-    'title'            => 'Tweet Button Node Settings',
-    'description'      => 'Configure tweet button for nodes',
+
+  $items['admin/config/services/tweetbutton/node'] = array(
+    'title'            => 'Node Settings',
+    'description'      => 'Configure how the Tweet Button interacts with nodes.',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('tweetbutton_node_settings'),
     'access arguments' => array('administer tweetbutton'),
     'file'             => 'tweetbutton.admin.inc',
     'weight'           => 1,
+    'type'             => MENU_LOCAL_TASK,
   );
-  
+
   return $items;
 }
 
@@ -57,7 +67,7 @@ function tweetbutton_menu() {
 function tweetbutton_theme() {
 	return array(
     'tweetbutton_display' => array(
-      'variables' => array('tokens' => NULL),
+      'variables' => array('object' => NULL, 'options' => array()),
     ),
   );
 }
@@ -81,60 +91,90 @@ function tweetbutton_permission() {
  */
 function tweetbutton_node_view($node, $view_mode) {
   if (in_array($node->type, variable_get('tweetbutton_node_types', array('article')), TRUE) 
-    && in_array($view_mode, variable_get('tweetbutton_node_location', array('full')), TRUE)
     && user_access('access tweetbutton')) {
+    if (in_array($view_mode, variable_get('tweetbutton_node_location', array('full')), TRUE)) {
+  	  $node->content['tweetbutton'] = array(
+	      '#object'   => $node,
+        '#weight'   => variable_get('tweetbutton_node_weight', -5),
+        '#theme'    => 'tweetbutton_display__' . $node->type,
+      );
+    }
     
-    drupal_add_js('http://platform.twitter.com/widgets.js'); 
-    drupal_add_css(drupal_get_path('module', 'tweetbutton').'/tweetbutton.css');
-    
-    // @todo: Add support for token replacements
-    $token_replacements = array(
-      '!title'        => $node->title,
-      '!author_name'  => $node->name,
-      '!node_type'    => $node->type,
-      '!node_url'     => url('node/'.$node->nid, array('absolute' => TRUE)),
-      '!view_mode'    => $view_mode,
-    );
-    
-	  $node->content['tweetbutton'] = array(
-      '#tokens'   => $token_replacements,
-      '#weight'   => variable_get('tweetbutton_node_weight', -5),
-      '#theme'    => 'tweetbutton_display__'.$node->type,
-    );
+    if (in_array('links', variable_get('tweetbutton_node_location', array('full')), TRUE)) {  
+      $node->content['links']['#links']['node_tweetbutton_link'] = array(
+        'title' => theme('tweetbutton_display__' . $node->type, array('object' => $node, 'options' => array('type' => 'horizontal'))), 
+        'html' => TRUE,
+      );
+    }
   }
 }
 
-
-function tweetbutton_get_attributes($tokens = array()) {
-  // If data-url is not set then use node url, in teaser mode we want to set this parameter 
-  // to fetch different counters for each node
-  $node_url    = isset($tokens['!node_url'])? $tokens['!node_url']: '';
+/**
+ * Implementation of hook_block_info()
+ */
+function tweetbutton_block_info() {
   
-	$button_type = variable_get('tweetbutton_button', 'vertical');
-  $tweet_text  = variable_get('tweetbutton_tweet_text');
-  $tweet_url   = variable_get('tweetbutton_tweet_url');
-  $language    = variable_get('tweetbutton_language');
-  $account     = variable_get('tweetbutton_account');
-  $rel_account = variable_get('tweetbutton_rel_account_name');
-  $rel_desc    = variable_get('tweetbutton_rel_account_description');
+}
+
+/**
+ * Helper function to build the required tweet attributes
+ * @param $object
+ *   Entity object can either be (node, user, taxonomy) 
+ * @param $options
+ *   Context specific options
+ * @return 
+ *   List of attributes to be rendered for twitter tweetbutton
+ */
+function tweetbutton_get_attributes($object = NULL, $options = array()) {
+  global $language;
+  $entity_type = empty($options['entity_type'])? 'node': $options['entity_type']; 
+  
+  $default_option = array(
+    'type'        => variable_get('tweetbutton_button', 'vertical'),
+    'text'        => variable_get('tweetbutton_tweet_text'),
+    'language'    => variable_get('tweetbutton_language'),
+    'account'     => variable_get('tweetbutton_account'),
+    'rel_account' => variable_get('tweetbutton_rel_account_name'),
+    'rel_desc'    => variable_get('tweetbutton_rel_account_description'),
+  );
+  
+  if (empty($options['url'])) {
+    if (empty($object)) {
+      $options['url'] = $_GET['q'];  
+    }
+    else {
+      $uri = entity_uri($entity_type, $object);
+      $options['url'] = $uri['path']; 
+    }
+  }
+
+  $options += $default_option;
   
   $attributes =  array(
-    'data-count'   => $button_type,
-    'data-via'     => $account,
-    'data-related' => "$rel_account:$rel_desc",
-    'data-text'    => strtr($tweet_text, $tokens),
-    'data-url'     => $tweet_url? $tweet_url: $node_url,
-    'data-lang'    => $language,
+    'data-count'   => $options['type'],
+    'data-via'     => $options['account'],
+    'data-related' => $options['rel_account'] . ':' . $options['rel_desc'],
+    'data-text'    => !empty($options['text'])? token_replace($options['text'], array($entity_type => $object)): '',
+    'data-counturl'=> $options['url'],
+    'data-url'     => $options['url'],
+    'data-lang'    => $options['language'] == 'auto' ? $language->language : $options['language'],
+    'class'        => 'twitter-share-button',
   );
+
   return $attributes;
 }
 
+
 function theme_tweetbutton_display($variables) {
-  $tokens = $variables['tokens'];
-  $attributes = tweetbutton_get_attributes($tokens);
+  $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE));
+  drupal_add_js($script_url, array('type' => 'external', 'scope' => 'footer'));
   
-  $link = '<div class="tweetbutton"><a href="http://twitter.com/share" class="twitter-share-button" ' .
-    drupal_attributes($attributes). '>Tweet</a></div>';
+  $object = $variables['object'];
+  $options = $variables['options'];
+  $attributes = tweetbutton_get_attributes($object, $options);
+ 
+  $tweet_link = l(t('Tweet'), 'http://twitter.com/share', array('attributes' => $attributes, 'external' => TRUE));
+  $link = '<div class="tweetbutton">' . $tweet_link . '</div>';
 
   return $link;
 }

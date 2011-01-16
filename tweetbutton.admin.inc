@@ -25,27 +25,24 @@ function tweetbutton_admin_settings() {
     '#type'          => 'textfield',
     '#title'         => t('Tweet Text'),
     '#default_value' => variable_get('tweetbutton_tweet_text'),
-    '#description'   => t('This is the text that people will include in their Tweet when they share from your website. If left empty title will be used. ' .
-      'Available tokens are: !title, !author_name, !node_type, !node_url (NOTE: Twitter will generate short url for the node)'),
   );
-  
-  $form['button']['tweetbutton_tweet_url'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('URL'),
-    '#default_value' => variable_get('tweetbutton_tweet_url'),
-    '#description'   => t('Leave blank for using the URL of the node the button is on.'),
-  );
+
+  $form['button']['tokens'] = array(
+    '#token_types' => array('node'),
+    '#theme' => 'token_tree',
+  );  
 
   $form['button']['tweetbutton_language'] = array(
     '#title' => t('Language'),
     '#description' => t('This is the language that the button will render in on your website. People will see the Tweet dialog in their selected language for Twitter.com.'),
     '#type' => 'select',
     '#options' => array(
-      'en' => t('English'),
-      'fr' => t('French'),
-      'de' => t('German'),
-      'es' => t('Spanish'),
-      'ja' => t('Japanese'),
+      'en'   => t('English'),
+      'fr'   => t('French'),
+      'de'   => t('German'),
+      'es'   => t('Spanish'),
+      'ja'   => t('Japanese'),
+      'auto' => t('Automatic'),
     ),
     '#default_value' => variable_get('tweetbutton_language'),
   );
@@ -74,26 +71,6 @@ function tweetbutton_admin_settings() {
     '#title' => t('Related Account Description'),
     '#default_value' => variable_get('tweetbutton_rel_account_description'),
   );
-  
-  $form['preview'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Preview'),
-  );
-  
-  $attributes = tweetbutton_get_attributes();
-  
-  $markup = '<div id="tweetbutton-preview"><a href="http://twitter.com/share" class="twitter-share-button" '. drupal_attributes($attributes).'>Tweet</a></div>';
-  $form['preview']['tweetbutton_preview'] = array(
-    '#type' => 'markup',
-    '#markup' => $markup, 
-    '#attached' => array(
-      'js' => array(
-  //       drupal_get_path('module', 'tweetbutton').'/tweetbutton.js',
-        'http://platform.twitter.com/widgets.js',
-      ),
-      'css' => array(drupal_get_path('module', 'tweetbutton').'/tweetbutton.css'),
-    ),
-  );
 
   return system_settings_form($form);
 }
@@ -119,6 +96,8 @@ function tweetbutton_node_settings() {
   foreach($view_modes as $name => $info) {
     $options[$name] = $info['label'];
   }
+  
+  $options['links'] = t('Node links');
   
   $form['tweetbutton_node_location'] = array(
     '#type'    => 'checkboxes',
