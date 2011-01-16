@@ -82,8 +82,8 @@ function tweetbutton_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   // Do not display tweetbutton in node content if its set in node links
   if (in_array($node->type, variable_get('tweetbutton_node_types', array('story')), TRUE) 
     && !empty($locations[$node_location])
-    && empty($locations['links'])
     && user_access('access tweetbutton')
+    && tweetbutton_allowed_path()
     && $op == 'view') {
      
     $weight = (module_exists('content')) ? content_extra_field_weight($node->type, 'tweetbutton_widget') : variable_get('tweetbutton_node_weight', -5);
@@ -104,19 +104,50 @@ function tweetbutton_link($entity_type, $entity, $teaser = FALSE) {
   if ($entity_type != 'node'
     || !user_access('access tweetbutton')
     || empty($location['links'])
-    || ($teaser && empty($location['teaser']))
-    || (!$teaser && empty($location['full']))
+    || !tweetbutton_allowed_path()
     || (!in_array($entity->type, variable_get('tweetbutton_node_types', array('story')), TRUE))) {
     return;
   }
   $links = array();
   
   $links['tweetbutton'] = array(
-    'title' => theme('tweetbutton_display', $entity), 
+    'title' => theme('tweetbutton_display', $entity, array('type' => 'horizontal')), 
     'html' => TRUE,
   );  
 
   return $links;
+}
+
+function tweetbutton_allowed_path() {
+  static $page_match;
+  
+  if (isset($page_match)) {
+    return $page_match;
+  }
+  
+  $pages = variable_get('tweetbutton_page_pages', '');
+  $visibility = variable_get('tweetbutton_page_visibility', '');
+  // Match path if necessary
+  if ($pages) {
+    if ($visibility < 2) {
+      $path = drupal_get_path_alias($_GET['q']);
+      // Compare with the internal and path alias (if any).
+      $page_match = drupal_match_path($path, $pages);
+      if ($path != $_GET['q']) {
+        $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
+      }
+
+      $page_match = !($visibility xor $page_match);
+    }
+    else {
+      $page_match = drupal_eval($pages);
+    }
+  }
+  else {
+    $page_match = TRUE;
+  }
+  
+  return $page_match;
 }
 
 function tweetbutton_get_attributes($entity = NULL, $options = array()) {
