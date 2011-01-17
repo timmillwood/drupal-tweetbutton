@@ -113,7 +113,23 @@ function tweetbutton_node_view($node, $view_mode) {
  * Implementation of hook_block_info()
  */
 function tweetbutton_block_info() {
+  $blocks['tweetbutton'] = array(
+    'info' => t('Tweetbutton'),
+    'weight' => 0,    
+  );  
   
+  return $blocks;
+}
+
+/**
+ * Implementation of hook_block_configure 
+ */
+function tweetbutton_block_view($delta = '') {
+  if ($delta == 'tweetbutton') {
+    $block['subject'] = t('Tweetbutton');
+    $block['content'] = theme('tweetbutton_display', array('options' => array('text' => '')));
+    return $block; 
+  }
 }
 
 /**
@@ -140,11 +156,11 @@ function tweetbutton_get_attributes($object = NULL, $options = array()) {
   
   if (empty($options['url'])) {
     if (empty($object)) {
-      $options['url'] = $_GET['q'];  
+      $options['url'] = url($_GET['q'], array('absolute' => TRUE));  
     }
     else {
       $uri = entity_uri($entity_type, $object);
-      $options['url'] = $uri['path']; 
+      $options['url'] = url($uri['path'], array('absolute' => TRUE)); 
     }
   }
 
