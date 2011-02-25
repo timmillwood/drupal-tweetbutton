@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class views_handler_field_tweetbutton extends views_handler_field {
   

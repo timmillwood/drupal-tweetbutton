@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function tweetbutton_views_data() {
   $data = array();

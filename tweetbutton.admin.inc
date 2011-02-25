@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function tweetbutton_admin_settings() {
 	$form = array();
