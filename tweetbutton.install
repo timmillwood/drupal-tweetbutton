@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function tweetbutton_uninstall() {
 	variable_del('tweetbutton_button');
