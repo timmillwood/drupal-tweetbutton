@@ -74,7 +74,7 @@ function tweetbutton_field_widget_info() {
 function tweetbutton_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $element['account'] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($field['settings']['author_twitter'])? $field['settings']['author_twitter']: '',
+    '#default_value' => isset($items[$delta]['account'])? $items[$delta]['account']: $field['settings']['author_twitter'],
     '#title' => t('Author twitter account'),
     '#description' => t('Leave blank to use global twitter account.'),
     '#maxlength' => 128,
@@ -83,7 +83,7 @@ function tweetbutton_field_widget_form(&$form, &$form_state, $field, $instance, 
   
   $element['text'] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($field['settings']['tweet_text'])? $field['settings']['tweet_text']: '',
+    '#default_value' => isset($items[$delta]['text'])? $items[$delta]['text']: $field['settings']['tweet_text'],
     '#title' => t('Tweet text'),
     '#description' => t('Leave blank to use page title as tweet text'),
     '#maxlength' => 32,
