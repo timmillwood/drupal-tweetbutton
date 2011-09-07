@@ -1,14 +1,6 @@
 <?php
 
 /**
- * Implementation of hook_element_info()
- */
-function tweetbutton_element_info() {
-  module_load_include('inc', 'tweetbutton', 'tweetbutton.elements');
-  return _tweetbutton_element_info();
-}
-
-/**
  * Implementation of hook_field_info() 
  */
 function tweetbutton_field_info() {
