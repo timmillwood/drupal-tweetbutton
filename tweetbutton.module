@@ -1,6 +1,167 @@
 <?php
 
 /**
+ * Implementation of hook_element_info()
+ */
+function tweetbutton_element_info() {
+  module_load_include('inc', 'tweetbutton', 'tweetbutton.elements');
+  return _tweetbutton_element_info();
+}
+
+/**
+ * Implementation of hook_field_info() 
+ */
+function tweetbutton_field_info() {
+  return array(
+    'tweetbutton' => array(
+      'label' => 'Tweetbutton',
+      'description' => 'Creates a tweetbutton field',
+      'instance_settings' => array( 'tweet_text', 'author_twitter'),
+      'default_widget' => 'tweetbutton',
+      'default_formatter' => 'tweetbutton_formatter_button_horizontal',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field_is_empty() 
+ */
+function tweetbutton_field_is_empty($item, $field) {
+  return FALSE;
+}
+
+/**
+ * Implementation of hook_field_settings_form 
+ */
+function tweetbutton_field_settings_form($field, $instance, $has_data) {
+  $settings = $field['settings'];
+  
+  $form = array();
+  
+  $form['tweet_text'] = array(
+    '#type' => 'textfield',
+    '#title' =>  t('Tweet text'),
+    '#default_value' => isset($settings['tweet_text'])? $settings['tweet_text']: variable_get('tweetbutton_tweet_text'),
+  );
+
+
+  $form['author_twitter'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Author twitter account'),
+    '#default_value' => isset($settings['author_twitter'])? $settings['author_twitter']: variable_get('tweetbutton_account'),
+    '#description' => t('This user will be @mentioned in the suggested'),
+  );
+  
+  $form['tokens'] = array(
+    '#token_types' => array($instance['entity_type']),
+    '#theme' => 'token_tree',
+  );
+  
+  return $form;
+}
+
+/**
+ * Implementation of hook_field_widget_info() 
+ */
+function tweetbutton_field_widget_info() {
+  return array(
+    'tweetbutton' => array(
+      'label' => t('Tweetbutton'),
+      'field types' => array('tweetbutton'),
+      'behaviors' => array(
+        'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+        'default value' => FIELD_BEHAVIOR_DEFAULT
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field_widget_form() 
+ */
+function tweetbutton_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $element['text'] = array(
+    '#type' => 'textfield',
+    '#default_value' => isset($field['settings']['author_twitter'])? $field['settings']['author_twitter']: '',
+    '#title' => t('Author twitter account'),
+    '#description' => t('Leave blank to use global twitter account.'),
+    '#maxlength' => 128,
+    '#access' => user_access('use tweetbutton field'),
+  );
+  
+  $element['account'] = array(
+    '#type' => 'textfield',
+    '#default_value' => isset($field['settings']['tweet_text'])? $field['settings']['tweet_text']: '',
+    '#title' => t('Tweet text'),
+    '#description' => t('Leave blank to use page title as tweet text'),
+    '#maxlength' => 32,
+    '#access' => user_access('use tweetbutton field'),
+  );
+  
+  return $element;
+}
+
+/**
+ * Implementation of hook_field_presave() 
+ */
+function tweetbutton_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  if ($field['type'] == 'tweetbutton') {
+    foreach ($items as $delta => $item) {
+      $data = array($entity_type => $entity);
+      $items[$delta]['text'] = !empty($items[$delta]['text'])? token_replace($items[$delta]['text'], $data): '';
+      $items[$delta]['account'] = !empty($items[$delta]['account'])? token_replace($items[$delta]['account'], $data): '';
+    }
+  }
+}
+
+/**
+ * Implementation of hook_field_formatter_info()
+ */
+function tweetbutton_field_formatter_info() {
+  return array(
+    'tweetbutton_formatter_button_vertical' => array(
+      'label' => t('Tweetbutton style vertical'),
+      'field_types' => array('tweetbutton'),
+    ),
+    'tweetbutton_formatter_button_horizontal' => array(
+      'label' => t('Tweetbutton style horizontal'),
+      'field_types' => array('tweetbutton'),
+    ),
+    'tweetbutton_formatter_button_none' => array(
+      'label' => t('Tweetbutton style none'),
+      'field_types' => array('tweetbutton'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function tweetbutton_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  
+  $delta = 0;
+  switch ($display['type']) {
+    case 'tweetbutton_formatter_button_vertical':
+      $button_type = 'vertical';
+      break;
+    case 'tweetbutton_formatter_button_horizontal':
+      $button_type = 'horizontal';
+      break;
+    case 'tweetbutton_formatter_button_none':
+      $button_type = 'none';
+      break;
+  }
+
+  $element[$delta] = array(
+      '#theme' => 'tweetbutton_display',
+      '#options' => array(
+        'type' => $button_type,
+       ),
+       '#tweet_text' => $items[$delta]['text'],
+    );
+}
+
+/**
  * Implementation of hook_help()
  */
 function tweetbutton_help($path, $arg) {
@@ -81,6 +242,9 @@ function tweetbutton_permission() {
     ),
     'access tweetbutton' => array(
       'title' => t('Access Tweet Button'),
+    ),
+    'use tweetbutton field' => array(
+      'title' => t('Use tweetbutton field to alter tweet text')
     ),
   );
 }
