@@ -8,7 +8,7 @@ function tweetbutton_field_info() {
     'tweetbutton' => array(
       'label' => 'Tweetbutton',
       'description' => 'Creates a tweetbutton field',
-      'instance_settings' => array( 'tweet_text', 'author_twitter'),
+      'instance_settings' => array( 'tweet_text' => '', 'author_twitter' => ''),
       'default_widget' => 'tweetbutton',
       'default_formatter' => 'tweetbutton_formatter_button_horizontal',
     ),
@@ -23,11 +23,11 @@ function tweetbutton_field_is_empty($item, $field) {
 }
 
 /**
- * Implementation of hook_field_settings_form 
+ * Implementation of hook_field_instance_settings_form 
  */
-function tweetbutton_field_settings_form($field, $instance, $has_data) {
-  $settings = $field['settings'];
-  
+function tweetbutton_field_instance_settings_form($field, $instance) {
+  $settings = $instance['settings'];
+
   $form = array();
   
   $form['tweet_text'] = array(
@@ -44,8 +44,15 @@ function tweetbutton_field_settings_form($field, $instance, $has_data) {
     '#description' => t('This user will be @mentioned in the suggested'),
   );
   
+  if ($instance['entity_type'] == 'taxonomy_term') {
+    $token_type = 'term';
+  }
+  else {
+    $token_type = $instance['entity_type'];
+  }
+
   $form['tokens'] = array(
-    '#token_types' => array($instance['entity_type']),
+    '#token_types' => array($token_type),
     '#theme' => 'token_tree',
   );
   
@@ -72,9 +79,11 @@ function tweetbutton_field_widget_info() {
  * Implementation of hook_field_widget_form() 
  */
 function tweetbutton_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $default_author = isset($instance['settings']['author_twitter'])? $instance['settings']['author_twitter']: '';
+  $default_text = isset($instance['settings']['tweet_text'])? $instance['settings']['tweet_text']: '';
   $element['account'] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($items[$delta]['account'])? $items[$delta]['account']: $field['settings']['author_twitter'],
+    '#default_value' => isset($items[$delta]['account'])? $items[$delta]['account']: $default_author,
     '#title' => t('Author twitter account'),
     '#description' => t('Leave blank to use global twitter account.'),
     '#maxlength' => 128,
@@ -83,7 +92,7 @@ function tweetbutton_field_widget_form(&$form, &$form_state, $field, $instance, 
   
   $element['text'] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($items[$delta]['text'])? $items[$delta]['text']: $field['settings']['tweet_text'],
+    '#default_value' => isset($items[$delta]['text'])? $items[$delta]['text']: $default_text,
     '#title' => t('Tweet text'),
     '#description' => t('Leave blank to use page title as tweet text'),
     '#maxlength' => 32,
@@ -131,7 +140,7 @@ function tweetbutton_field_formatter_info() {
 /**
  * Implements hook_field_formatter_view().
  */
-function tweetbutton_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+function tweetbutton_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, &$items, $display) {
   
   $delta = 0;
   switch ($display['type']) {
@@ -146,13 +155,21 @@ function tweetbutton_field_formatter_view($entity_type, $entity, $field, $instan
       break;
   }
 
+  if (empty($items)) {
+    $items[$delta] = array(
+      'text' => '',
+      'account' => ''
+    );  
+  }
+
+  $uri = entity_uri($entity_type, $entity);
   $element[$delta] = array(
     '#theme' => 'tweetbutton_display',
     '#options' => array(
       'type'            => $button_type,
       'account'         => $items[$delta]['account'],
       'tweet_text'      => $items[$delta]['text'],
-      'url'             => url($entity->uri['path'], array('absolute' => TRUE)),
+      'url'             => url($uri['path'], array('absolute' => TRUE)),
     ),
     '#entity' => $entity,
     '#entity_type' => $entity_type,
@@ -284,7 +301,7 @@ function tweetbutton_get_attributes($options = array()) {
     'data-count'   => $options['type'],
     'data-via'     => $options['account'],
     'data-related' => $options['rel_account'] . ':' . $options['rel_desc'],
-    'data-text'    => $options['text'],
+    'data-text'    => $options['tweet_text'],
     'data-counturl'=> $options['url'],
     'data-url'     => $options['url'],
     'data-lang'    => $options['language'] == 'auto' ? $language->language : $options['language'],
@@ -298,7 +315,6 @@ function tweetbutton_get_attributes($options = array()) {
 function theme_tweetbutton_display($variables) {
   $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE));
   drupal_add_js($script_url, array('type' => 'external', 'scope' => 'footer'));
-  
   $options = $variables['options'];
   $attributes = tweetbutton_get_attributes($options);
  
