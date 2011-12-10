@@ -1,6 +1,21 @@
 <?php
 
 /**
+ * Implements hook_help().
+ */
+function tweetbutton_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#tweetbutton':
+    case 'admin/config/services/tweetbutton':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output = '<p>' . t('This button allows your website to let people share content on Twitter without having to leave the page. Promote strategic Twitter accounts at the same time while driving traffic to your website. These are the general configuration options for the button.') . '</p>';
+      $output .= '<p>' . t('To add tweetbutton you have to create a tweetbutton field and add it to your content (node, taxonomy, user).') . '</p>';
+      return $output;
+  }
+}
+
+/**
  * Implementation of hook_field_info() 
  */
 function tweetbutton_field_info() {
@@ -81,9 +96,10 @@ function tweetbutton_field_widget_info() {
 function tweetbutton_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $default_author = isset($instance['settings']['author_twitter'])? $instance['settings']['author_twitter']: '';
   $default_text = isset($instance['settings']['tweet_text'])? $instance['settings']['tweet_text']: '';
+
   $element['account'] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($items[$delta]['account'])? $items[$delta]['account']: $default_author,
+    '#default_value' => !empty($items[$delta]['account'])? $items[$delta]['account']: $default_author,
     '#title' => t('Author twitter account'),
     '#description' => t('Leave blank to use global twitter account.'),
     '#maxlength' => 128,
@@ -92,9 +108,9 @@ function tweetbutton_field_widget_form(&$form, &$form_state, $field, $instance, 
   
   $element['text'] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($items[$delta]['text'])? $items[$delta]['text']: $default_text,
+    '#default_value' => !empty($items[$delta]['text'])? $items[$delta]['text']: $default_text,
     '#title' => t('Tweet text'),
-    '#description' => t('Leave blank to use page title as tweet text'),
+    '#description' => t('Leave blank to use content title as tweet text'),
     '#maxlength' => 32,
     '#access' => user_access('use tweetbutton field'),
   );
@@ -110,7 +126,7 @@ function tweetbutton_field_presave($entity_type, $entity, $field, $instance, $la
     foreach ($items as $delta => $item) {
       $data = array($entity_type => $entity);
       $option = array('clear' => TRUE);
-      $items[$delta]['text'] = !empty($items[$delta]['text'])? token_replace($items[$delta]['text'], $data, $option): '';
+      $items[$delta]['text'] = !empty($items[$delta]['text'])? token_replace($items[$delta]['text'], $data, $option): $entity->title;
       $items[$delta]['account'] = !empty($items[$delta]['account'])? token_replace($items[$delta]['account'], $data, $option): '';
     }
   }
@@ -125,23 +141,61 @@ function tweetbutton_field_formatter_info() {
     'tweetbutton_formatter_button_vertical' => array(
       'label' => t('Tweetbutton style vertical'),
       'field types' => array('tweetbutton'),
+      'settings' =>  array(
+        'size' => 'medium',
+      ),
     ),
     'tweetbutton_formatter_button_horizontal' => array(
       'label' => t('Tweetbutton style horizontal'),
       'field types' => array('tweetbutton'),
+      'settings' =>  array(
+        'size' => 'medium',
+      ),
     ),
     'tweetbutton_formatter_button_none' => array(
       'label' => t('Tweetbutton style none'),
       'field types' => array('tweetbutton'),
+      'settings' =>  array(
+        'size' => 'medium',
+      ),
     ),
   );
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function tweetbutton_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  
+  $element['size'] = array(
+    '#type' => 'select',
+    '#title' => t('Tweetbutton size'),
+    '#options' => array('medium' => t('Medium'), 'large' => t('Large')),
+    '#default_value' => $settings['size']
+  );
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function tweetbutton_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $options = array('medium' => t('Medium'), 'large' => t('Large'));
+  $title = $options[$settings['size']];
+  return t('Size: !title', array('!title' => $title));
 }
 
 /**
  * Implements hook_field_formatter_view().
  */
 function tweetbutton_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, &$items, $display) {
-  
+  $settings = $display['settings'];
+
   $delta = 0;
   switch ($display['type']) {
     case 'tweetbutton_formatter_button_vertical':
@@ -164,8 +218,9 @@ function tweetbutton_field_formatter_view($entity_type, $entity, $field, $instan
 
   $uri = entity_uri($entity_type, $entity);
   $element[$delta] = array(
-    '#theme' => 'tweetbutton_display',
+    '#theme' => 'tweetbutton_tweet_display',
     '#options' => array(
+      'size'            => $settings['size'],
       'type'            => $button_type,
       'account'         => $items[$delta]['account'],
       'tweet_text'      => $items[$delta]['text'],
@@ -176,19 +231,6 @@ function tweetbutton_field_formatter_view($entity_type, $entity, $field, $instan
      
   );
   return $element;
-}
-
-/**
- * Implementation of hook_help()
- */
-function tweetbutton_help($path, $arg) {
-	$output = NULL;
-  switch($path) {
-  	case 'admin/help#tweetbutton':
-      $output = '<p>' . t('This button allows your website to let people share content on Twitter without having to leave the page. Promote strategic Twitter accounts at the same time while driving traffic to your website. These are the general configuration options for the button. Make sure to check the Node Settings to set where the button will appear.') . '</p>';
-  	  break;
-  }
-  return $output;
 }
 
 /**
@@ -215,8 +257,11 @@ function tweetbutton_menu() {
  */
 function tweetbutton_theme() {
 	return array(
-    'tweetbutton_display' => array(
-      'variables' => array('entity' => NULL, 'entity_type' => NULL, 'options' => array()),
+    'tweetbutton_tweet_display' => array(
+      'variables' => array('entity' => NULL, 'entity_type' => NULL, 'tweetbutton_label' => NULL, 'options' => array()),
+    ),
+    'tweetbutton_follow_display' => array(
+      'variables' => array('options' => array()),
     ),
   );
 }
@@ -228,6 +273,11 @@ function tweetbutton_theme() {
 function tweetbutton_cron() {
   // @TODO: Fetch count of each page where tweetbutton is on and add it to column 'count' in field
   // Will be useful in sorting page based on no of tweets and add views support
+  if (!variable_get('tweetbutton_get_count', FALSE)) {
+    return;
+  }
+  
+  
 }
 
 /**
@@ -265,7 +315,7 @@ function tweetbutton_block_info() {
 function tweetbutton_block_view($delta = '') {
   if ($delta == 'tweetbutton') {
     $block['subject'] = t('Tweetbutton');
-    $block['content'] = theme('tweetbutton_display');
+    $block['content'] = theme('tweetbutton_tweet_display');
     return $block; 
   }
 }
@@ -279,16 +329,17 @@ function tweetbutton_block_view($delta = '') {
  * @return 
  *   List of attributes to be rendered for twitter tweetbutton
  */
-function tweetbutton_get_attributes($options = array()) {
+function tweetbutton_tweet_get_attributes($options = array()) {
   global $language;
   
   $default_option = array(
     'type'        => variable_get('tweetbutton_button', 'vertical'),
-    'text'        => variable_get('tweetbutton_tweet_text'),
+    'tweet_text'  => variable_get('tweetbutton_tweet_text'),
     'language'    => variable_get('tweetbutton_language'),
     'account'     => variable_get('tweetbutton_account'),
     'rel_account' => variable_get('tweetbutton_rel_account_name'),
     'rel_desc'    => variable_get('tweetbutton_rel_account_description'),
+    'size'        => variable_get('tweetbutton_size', 'medium')
   );
   
   if (empty($options['url'])) {
@@ -298,6 +349,7 @@ function tweetbutton_get_attributes($options = array()) {
   $options += $default_option;
   
   $attributes =  array(
+    'data-size'    => $options['size'],
     'data-count'   => $options['type'],
     'data-via'     => $options['account'],
     'data-related' => $options['rel_account'] . ':' . $options['rel_desc'],
@@ -312,14 +364,47 @@ function tweetbutton_get_attributes($options = array()) {
 }
 
 
-function theme_tweetbutton_display($variables) {
+function theme_tweetbutton_tweet_display($variables) {
   $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE));
   drupal_add_js($script_url, array('type' => 'external', 'scope' => 'footer'));
   $options = $variables['options'];
-  $attributes = tweetbutton_get_attributes($options);
+  $attributes = tweetbutton_tweet_get_attributes($options);
  
-  $tweet_link = l(t('Tweet'), 'http://twitter.com/share', array('attributes' => $attributes, 'external' => TRUE));
-  $link = '<div class="tweetbutton">' . $tweet_link . '</div>';
+  $tweetbutton_label = isset($options['tweetbutton_label'])? $options['tweetbutton_label']: t('Tweet');
+  $tweet_link = l($tweetbutton_label, 'http://twitter.com/share', array('attributes' => $attributes, 'external' => TRUE));
+  $link = '<div class="tweetbutton-tweet tweetbutton">' . $tweet_link . '</div>';
 
+  return $link;
+}
+
+
+function tweetbutton_follow_get_attributes($options) {
+  global $language;
+  $default_options = array(
+    'show_count'       => variable_get('tweetbutton_follow_show_count', TRUE),
+    'show_screen_name' => variable_get('tweetbutton_follow_screen_name'),
+    'size'             => variable_get('tweetbutton_follow_size'),
+  );
+  
+  $options += $default_options;
+  
+  $attributes = array(
+    'data-show-count'       => $options['show_count'],
+    'data-show-screen-name' => $options['show_screen_name'],
+    'data-size'             => $options['size'],
+    'data-lang'             => $options['language'] == 'auto' ? $language->language : $options['language'],
+    'class'                 => 'twitter-follow-button',
+  );
+  return $attributes;
+}
+
+function theme_tweetbutton_follow_display($variables) {
+  $options = 
+  $follow_user_text = t('Follow !screen_name', array('!screen_name' => $screen_name));
+
+  
+  $twitter_account_link = 'http://twitter.com/' . $screen_name;
+  $follow_link = l($follow_user_text, $twitter_account_link,array('attributes' => $attributes, 'external' => TRUE));
+  $link = '<div class="tweetbutton-follow tweetbutton">' . $follow_link . '</div>';
   return $link;
 }

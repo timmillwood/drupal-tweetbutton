@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * Implements hook_field_schema()
  */
@@ -17,18 +18,14 @@ function tweetbutton_field_schema($field) {
           'length' => 32,  
           'not null' => FALSE,
         ),
-        'count' => array(
-          'type' => 'int',
-          'not null' => FALSE,
-          'sortable' => TRUE
-        ),
       );
       break;
   }
   return array(
     'columns' => $columns,
     'indexes' => array(
-      'count' => array('count'),
+      'account' => array('account'),
+      'text' => array('text'),
     ),
   );
 }

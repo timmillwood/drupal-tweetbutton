@@ -7,7 +7,7 @@ function tweetbutton_admin_settings() {
   
   $form['button'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Choose your button. Customize it'),
+    '#title' => t('Default settings for tweetbutton'),
   );
   
   $form['button']['tweetbutton_button'] = array(
@@ -26,6 +26,7 @@ function tweetbutton_admin_settings() {
     '#type'          => 'textfield',
     '#title'         => t('Tweet Text'),
     '#default_value' => variable_get('tweetbutton_tweet_text'),
+    '#description'  => t('Tweet text to use as a default text, if no values are passed, leave this to blank to use page title as tweet text.')
   );
 
   $form['button']['tokens'] = array(
@@ -33,6 +34,23 @@ function tweetbutton_admin_settings() {
     '#theme' => 'token_tree',
   );  
 
+  $form['button']['tweetbutton_size'] = array(
+    '#title' => t('Tweetbutton size'),
+    '#type' => 'select',
+    '#options' => array(
+      'medium' => t('Medium'),
+      'large' => t('Large'),
+    ),
+    '#default_value' => variable_get('tweetbutton_size'),
+  );
+  
+  $form['button']['tweetbutton_hashtags'] = array(
+    '#title' => t('Hashtags'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('tweetbutton_hashtags'),
+    '#description' => t('Comma separated hashtags to be used in every tweet'),
+  );
+  
   $form['button']['tweetbutton_language'] = array(
     '#title' => t('Language'),
     '#description' => t('This is the language that the button will render in on your website. People will see the Tweet dialog in their selected language for Twitter.com.'),
