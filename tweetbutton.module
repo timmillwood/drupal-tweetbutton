@@ -89,9 +89,11 @@ function tweetbutton_permission() {
  * Implementation of hook_node_view()
  */
 function tweetbutton_node_view($node, $view_mode) {
-  if (in_array($node->type, variable_get('tweetbutton_node_types', array('article')), TRUE) 
+  $available_types = variable_get('tweetbutton_node_types', array('article'));
+  $available_view_modes = variable_get('tweetbutton_node_location', array('full'));
+  if (!empty($available_types[$node->type]) 
     && user_access('access tweetbutton')) {
-    if (in_array($view_mode, variable_get('tweetbutton_node_location', array('full')), TRUE)) {
+    if (!empty($available_view_modes[$view_mode])) {
   	  $node->content['tweetbutton'] = array(
 	      '#object'   => $node,
         '#weight'   => variable_get('tweetbutton_node_weight', -5),
@@ -99,7 +101,7 @@ function tweetbutton_node_view($node, $view_mode) {
       );
     }
     
-    if (in_array('links', variable_get('tweetbutton_node_location', array('full')), TRUE)) {  
+    if (!empty($available_view_modes['links'])) {  
       $node->content['links']['#links']['node_tweetbutton_link'] = array(
         'title' => theme('tweetbutton_display__' . $node->type, array('object' => $node, 'options' => array('type' => 'horizontal'))), 
         'html' => TRUE,
@@ -112,7 +114,21 @@ function tweetbutton_node_view($node, $view_mode) {
  * Implementation of hook_block_info()
  */
 function tweetbutton_block_info() {
-  
+  $blocks['tweetbutton'] = array(
+    'info' => t('Tweetbutton'),
+  );
+  return $blocks;
+}
+
+/**
+ * Implementation of hook_block_configure
+ */
+function tweetbutton_block_view($delta = '') {
+  if ($delta == 'tweetbutton') {
+    $block['subject'] = t('Tweetbutton');
+    $block['content'] = theme('tweetbutton_display');
+    return $block;
+  }
 }
 
 /**
@@ -139,21 +155,28 @@ function tweetbutton_get_attributes($object = NULL, $options = array()) {
   
   if (empty($options['url'])) {
     if (empty($object)) {
-      $options['url'] = $_GET['q'];  
+      $options['url'] = url($_GET['q'], array('absolute' => TRUE));  
     }
     else {
       $uri = entity_uri($entity_type, $object);
-      $options['url'] = $uri['path']; 
+      $options['url'] = url($uri['path'], array('absolute' => TRUE)); 
     }
   }
 
   $options += $default_option;
   
+  if ($entity_type == 'taxonomy_term') {
+    $token_type = 'term';
+  }
+  else {
+    $token_type = $entity_type;
+  }
+
   $attributes =  array(
     'data-count'   => $options['type'],
     'data-via'     => $options['account'],
     'data-related' => $options['rel_account'] . ':' . $options['rel_desc'],
-    'data-text'    => !empty($options['text'])? token_replace($options['text'], array($entity_type => $object)): '',
+    'data-text'    => !empty($options['text'])? token_replace($options['text'], array($token_type => $object)): '',
     'data-counturl'=> $options['url'],
     'data-url'     => $options['url'],
     'data-lang'    => $options['language'] == 'auto' ? $language->language : $options['language'],
