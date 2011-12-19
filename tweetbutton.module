@@ -258,10 +258,13 @@ function tweetbutton_menu() {
 function tweetbutton_theme() {
 	return array(
     'tweetbutton_tweet_display' => array(
-      'variables' => array('entity' => NULL, 'entity_type' => NULL, 'tweetbutton_label' => NULL, 'options' => array()),
+      'variables' => array('entity' => NULL, 'entity_type' => NULL, 'options' => array()),
     ),
     'tweetbutton_follow_display' => array(
-      'variables' => array('options' => array()),
+      'variables' => array('options' => array(), 'screen_name' => ''),
+    ),
+    'tweetbutton_hashtag_display' => array(
+      'variables' => array('options' => array(), 'hashtag' => ''),
     ),
   );
 }
@@ -301,11 +304,12 @@ function tweetbutton_permission() {
  * Implementation of hook_block_info()
  */
 function tweetbutton_block_info() {
-  $blocks['tweetbutton'] = array(
-    'info' => t('Tweetbutton'),
-    'weight' => 0,    
+  $blocks['tweetbutton_tweet'] = array(
+    'info' => t('Tweetbutton tweet'),
   );  
-  
+  $blocks['tweetbutton_follow'] = array(
+    'info' => t('Tweetbutton follow'),
+  );
   return $blocks;
 }
 
@@ -313,10 +317,15 @@ function tweetbutton_block_info() {
  * Implementation of hook_block_configure 
  */
 function tweetbutton_block_view($delta = '') {
-  if ($delta == 'tweetbutton') {
-    $block['subject'] = t('Tweetbutton');
+  if ($delta == 'tweetbutton_tweet') {
+    $block['subject'] = t('Tweetbutton tweet');
     $block['content'] = theme('tweetbutton_tweet_display');
     return $block; 
+  }
+  elseif ($delta == 'tweetbutton_follow') {
+    $block['subject'] = t('Tweetbutton follow');
+    $block['content'] = theme('tweetbutton_follow_display');
+    return $block;
   }
 }
 
@@ -349,7 +358,15 @@ function tweetbutton_tweet_get_attributes($options = array()) {
   }
   
   if (module_exists('shorten') && ($service = variable_get('tweetbutton_shorten_service'))) {
-    $options['url'] = shorten_url($options['url'], $service);
+    $url = shorten_url($options['url'], $service);
+    // if www => http://  replacement if enabled
+    if (variable_get('shorten_www', TRUE)) {
+      if (strpos($url, 'www.') === 0) {
+        $url = drupal_substr($url, 4);
+        $url = 'http://' . $url;
+      }
+    }
+    $options['url'] = $url;
   }
   
   
@@ -372,13 +389,13 @@ function tweetbutton_tweet_get_attributes($options = array()) {
 
 
 function theme_tweetbutton_tweet_display($variables) {
-  $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE));
+  $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE, 'https' => TRUE));
   drupal_add_js($script_url, array('type' => 'external', 'scope' => 'footer'));
   $options = $variables['options'];
   $attributes = tweetbutton_tweet_get_attributes($options);
  
   $tweetbutton_label = isset($options['tweetbutton_label'])? $options['tweetbutton_label']: t('Tweet');
-  $tweet_link = l($tweetbutton_label, 'http://twitter.com/share', array('attributes' => $attributes, 'external' => TRUE));
+  $tweet_link = l($tweetbutton_label, 'http://twitter.com/share', array('attributes' => $attributes, 'external' => TRUE, 'https' => TRUE));
   $link = '<div class="tweetbutton-tweet tweetbutton">' . $tweet_link . '</div>';
 
   return $link;
@@ -391,6 +408,7 @@ function tweetbutton_follow_get_attributes($options) {
     'show_count'       => variable_get('tweetbutton_follow_show_count', TRUE),
     'show_screen_name' => variable_get('tweetbutton_follow_screen_name'),
     'size'             => variable_get('tweetbutton_follow_size'),
+    'language'         => variable_get('tweetbutton_language'),
   );
   
   $options += $default_options;
@@ -406,17 +424,55 @@ function tweetbutton_follow_get_attributes($options) {
 }
 
 function theme_tweetbutton_follow_display($variables) {
-  $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE));
+  $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE, 'https' => TRUE));
   drupal_add_js($script_url, array('type' => 'external', 'scope' => 'footer'));
   
   $options = $variables['options'];
-  $follow_user_text = isset($options['tweetbutton_label'])? $options['tweetbutton_label']: t('Follow !screen_name', array('!screen_name' => $options['screen_name']));
+  $screen_name = $variables['screen_name'];
+  if (empty($screen_name)) {
+    $screen_name = variable_get('tweetbutton_follow_screen_name');
+  }
+  $follow_user_text = isset($options['tweetbutton_label'])? $options['tweetbutton_label']: t('Follow !screen_name', array('!screen_name' => $screen_name));
  
   $twitter_account_link = 'http://twitter.com/' . $screen_name;
   
   $attributes = tweetbutton_follow_get_attributes($options);
   
-  $follow_link = l($follow_user_text, $twitter_account_link,array('attributes' => $attributes, 'external' => TRUE));
+  $follow_link = l($follow_user_text, $twitter_account_link,array('attributes' => $attributes, 'external' => TRUE, 'https' => TRUE));
   $link = '<div class="tweetbutton-follow tweetbutton">' . $follow_link . '</div>';
   return $link;
+}
+
+function tweetbutton_hashtag_get_attributes($options) {
+  global $language;
+  $default_options = array(
+    'rel_account'     => variable_get('tweetbutton_account'),
+  );
+  
+  $options += $default_options;
+  
+  $attributes = array(
+    'data-related' => $options['rel_account'],
+    'data-lang' => $options['language'] == 'auto'? $language->language: $options['language'],
+    'class' => 'twitter-hashtag-button',
+  );
+}
+
+function theme_tweetbutton_hashtag_display($variables) {
+  $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE));
+  drupal_add_js($script_url, array('type' => 'external', 'scope' => 'footer'));
+  
+  $options = $variables['options'];
+  $attributes = tweetbutton_hashtag_get_attributes($options);
+  $query = array();
+  if (!empty($options['tweet_text'])) {
+    $query['tweet_text'] = $options['tweet_text'];
+  }
+  
+  if (!empty($variables['hashtag'])) {
+    $query['button_hashtag'] = $variables['hashtag'];
+  }
+  
+  $hash_link = l($hash_text, 'http://twitter.com/intent/tweet', array('query' => $query, 'attributes' => $attributes, 'external' => TRUE, 'https' => TRUE));
+  return '<div class="tweetbutton-hashtag tweetbutton">' . $hash_link . '</div>';
 }

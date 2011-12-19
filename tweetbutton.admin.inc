@@ -83,12 +83,12 @@ function tweetbutton_admin_settings() {
     );
   }
   
-  $form['follow'] = array(
+  $form['button']['follow'] = array(
     '#type' => 'fieldset',
     '#title' => t('Recommend people to follow'),
   );
   
-  $form['follow']['tweetbutton_account'] = array(
+  $form['button']['follow']['tweetbutton_account'] = array(
     '#type' => 'textfield',
     '#title' => t('Twitter account to follow'),
     '#description' => t('This user will be @mentioned in the suggested. Will be used as default if tweetbutton fields author twitter account is not set'),
@@ -96,18 +96,47 @@ function tweetbutton_admin_settings() {
     '#id' => 'tweetbutton-account',
   );
   
-  $form['follow']['tweetbutton_rel_account_name'] = array(
+  $form['button']['follow']['tweetbutton_rel_account_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Related Account'),
     '#default_value' => variable_get('tweetbutton_rel_account_name'),
     '#description' => t('This should be site default twitter account'),
   );
   
-  $form['follow']['tweetbutton_rel_account_description'] = array(
+  $form['button']['follow']['tweetbutton_rel_account_description'] = array(
     '#type' => 'textfield',
     '#title' => t('Related Account Description'),
     '#default_value' => variable_get('tweetbutton_rel_account_description'),
   );
 
+  
+  
+  $form['follow_button'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Follow button settings'),
+  );
+  
+  $form['follow_button']['tweetbutton_follow_show_count'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show follow count'),
+    '#default_value' => variable_get('tweetbutton_follow_show_count', TRUE),
+  );
+  
+  $form['follow_button']['tweetbutton_follow_screen_name'] = array(
+    '#type'           => 'textfield',
+    '#title'          => t('Screen name to follow'),
+    '#default_value'  => variable_get('tweetbutton_follow_screen_name'),
+  );
+  
+  $form['follow_button']['tweetbutton_follow_size'] = array(
+    '#title' => t('Tweetbutton size'),
+    '#type' => 'select',
+    '#options' => array(
+      'medium' => t('Medium'),
+      'large' => t('Large'),
+    ),
+    '#default_value' => variable_get('tweetbutton_follow_size'),
+  );
+  
   return system_settings_form($form);
 }

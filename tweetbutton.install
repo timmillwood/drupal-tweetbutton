@@ -45,4 +45,7 @@ function tweetbutton_uninstall() {
   variable_del('tweetbutton_node_types');
   variable_del('tweetbutton_node_location');  
   variable_del('tweetbutton_shorten_service');
+  variable_del('tweetbutton_follow_show_count');
+  variable_del('tweetbutton_follow_screen_name');
+  variable_del('tweetbutton_follow_size');
 }
