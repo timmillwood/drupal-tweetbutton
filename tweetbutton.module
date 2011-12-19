@@ -414,7 +414,7 @@ function tweetbutton_follow_get_attributes($options) {
   $options += $default_options;
   
   $attributes = array(
-    'data-show-count'       => $options['show_count'],
+    'data-show-count'       => $options['show_count']? 'true': 'false',
     'data-show-screen-name' => $options['show_screen_name'],
     'data-size'             => $options['size'],
     'data-lang'             => $options['language'] == 'auto' ? $language->language : $options['language'],
