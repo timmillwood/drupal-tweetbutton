@@ -322,8 +322,6 @@ function tweetbutton_block_view($delta = '') {
 
 /**
  * Helper function to build the required tweet attributes
- * @param $object
- *   Entity object can either be (node, user, taxonomy) 
  * @param $options
  *   Context specific options
  * @return 
@@ -345,7 +343,16 @@ function tweetbutton_tweet_get_attributes($options = array()) {
   if (empty($options['url'])) {
     $options['url'] = url($_GET['q'], array('absolute' => TRUE));  
   }
-
+  
+  if (empty($options['count_url'])) {
+    $options['count_url'] = $options['url'];
+  }
+  
+  if (module_exists('shorten') && ($service = variable_get('tweetbutton_shorten_service'))) {
+    $options['url'] = shorten_url($options['url'], $service);
+  }
+  
+  
   $options += $default_option;
   
   $attributes =  array(
@@ -354,7 +361,7 @@ function tweetbutton_tweet_get_attributes($options = array()) {
     'data-via'     => $options['account'],
     'data-related' => $options['rel_account'] . ':' . $options['rel_desc'],
     'data-text'    => $options['tweet_text'],
-    'data-counturl'=> $options['url'],
+    'data-counturl'=> $options['count_url'],
     'data-url'     => $options['url'],
     'data-lang'    => $options['language'] == 'auto' ? $language->language : $options['language'],
     'class'        => 'twitter-share-button',
@@ -399,11 +406,16 @@ function tweetbutton_follow_get_attributes($options) {
 }
 
 function theme_tweetbutton_follow_display($variables) {
-  $options = 
-  $follow_user_text = t('Follow !screen_name', array('!screen_name' => $screen_name));
-
+  $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE));
+  drupal_add_js($script_url, array('type' => 'external', 'scope' => 'footer'));
   
+  $options = $variables['options'];
+  $follow_user_text = isset($options['tweetbutton_label'])? $options['tweetbutton_label']: t('Follow !screen_name', array('!screen_name' => $options['screen_name']));
+ 
   $twitter_account_link = 'http://twitter.com/' . $screen_name;
+  
+  $attributes = tweetbutton_follow_get_attributes($options);
+  
   $follow_link = l($follow_user_text, $twitter_account_link,array('attributes' => $attributes, 'external' => TRUE));
   $link = '<div class="tweetbutton-follow tweetbutton">' . $follow_link . '</div>';
   return $link;

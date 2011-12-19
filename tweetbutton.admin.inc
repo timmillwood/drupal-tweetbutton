@@ -66,6 +66,23 @@ function tweetbutton_admin_settings() {
     '#default_value' => variable_get('tweetbutton_language'),
   );
   
+  if (module_exists('shorten')) {
+
+    $services = array();
+    $services[0] = t('Use t.co twitter default url shortener');
+    $all_services = module_invoke_all('shorten_service');
+    foreach (array_keys($all_services) as $value) {
+      $services[$value] = $value;
+    }
+    
+    $form['button']['tweetbutton_shorten_service'] = array(
+      '#title' => t('Shorten service to use to add custom url'),
+      '#type' => 'select',
+      '#options' => $services,
+      '#default_value' => variable_get('tweetbutton_shorten_service', 0),
+    );
+  }
+  
   $form['follow'] = array(
     '#type' => 'fieldset',
     '#title' => t('Recommend people to follow'),
