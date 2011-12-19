@@ -254,3 +254,12 @@ function theme_tweetbutton_follow_display($variables) {
   $link = '<div class="tweetbutton-follow tweetbutton">' . $follow_link . '</div>';
   return $link;
 }
+
+/**
+ *  Implementation of hook_views_api().
+ */
+function tweetbutton_views_api() {
+  return array(
+    'api' => '2.0',
+  );
+}

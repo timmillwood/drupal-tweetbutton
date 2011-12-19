@@ -3,3 +3,6 @@ description = Add tweet button to  your website without having to leave the page
 core = 7.x
 dependencies[] = token
 configure = admin/config/services/tweetbutton
+
+files[] = tweetbutton.views.inc
+files[] = tweetbutton_handler_field_tweet.inc
