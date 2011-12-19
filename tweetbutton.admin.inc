@@ -135,6 +135,7 @@ function tweetbutton_node_settings() {
   
   $form['tweetbutton_node_weight'] = array(
     '#type'          => 'weight',
+    '#delta'         => 50,
     '#title'         => t('Weight'),
     '#default_value' => variable_get('tweetbutton_node_weight', -5),
     '#description'   => t('Heavier weight will sink button to bottom on node view'),
