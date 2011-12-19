@@ -96,15 +96,40 @@ function tweetbutton_node_view($node, $view_mode) {
   $available_view_modes = variable_get('tweetbutton_node_location', array('full'));
   if (!empty($available_types[$node->type]) 
     && user_access('access tweetbutton')) {
+      
+    
     if (!empty($available_view_modes[$view_mode])) {
-  	  $node->content['tweetbutton'] = array(
-	      '#object'   => $node,
-        '#weight'   => variable_get('tweetbutton_node_weight', -5),
-        '#theme'    => 'tweetbutton_display__' . $node->type,
-      );
+      if ($view_mode != 'rss') {
+    	  $node->content['tweetbutton'] = array(
+	        '#object'   => $node,
+          '#weight'   => variable_get('tweetbutton_node_weight', -5),
+          '#theme'    => 'tweetbutton_display__' . $node->type,
+        );
+      }
+      else {
+        $query = array();
+      
+        $query['text'] = token_replace(variable_get('tweetbutton_tweet_text'), array('node' => $node));
+        if (empty($query['text'])) {
+          $query['text'] = truncate_utf8($node->title, 120, TRUE, TRUE);
+        }
+      
+        $query['via'] = variable_get('tweetbutton_account');
+        $query['related'] = variable_get('tweetbutton_rel_account_name');
+      
+        // set url
+        $uri = entity_uri('node', $node);
+        $options['url'] = url($uri['path'], array('absolute' => TRUE)); 
+        $query['url'] = $options['url'];
+        $language = variable_get('tweetbutton_language');
+        $query['language'] = $language == 'auto' ? $GLOBALS['language']->language : $language;
+      
+        $node->content['tweetbutton']['#markup'] = l(t('Tweet'), 'http://twitter.com/intent/tweet', array('query' => $query, 'attributes' => array('target' => '_blank')));
+        
+      }
     }
     
-    if (!empty($available_view_modes['links'])) {  
+    if (!empty($available_view_modes['links']) && $view_mode != 'rss') {  
       $node->content['links']['#links']['node_tweetbutton_link'] = array(
         'title' => theme('tweetbutton_display__' . $node->type, array('object' => $node, 'options' => array('type' => 'horizontal'))), 
         'html' => TRUE,
