@@ -68,6 +68,9 @@ function tweetbutton_theme() {
     'tweetbutton_display' => array(
       'variables' => array('object' => NULL, 'options' => array()),
     ),
+    'tweetbutton_follow_display' => array(
+      'variables' => array('options' => array(), 'screen_name' => ''),
+    ),
   );
 }
 
@@ -115,7 +118,10 @@ function tweetbutton_node_view($node, $view_mode) {
  */
 function tweetbutton_block_info() {
   $blocks['tweetbutton'] = array(
-    'info' => t('Tweetbutton'),
+    'info' => t('Tweetbutton tweet'),
+  );
+  $blocks['tweetbutton_follow'] = array(
+    'info' => t('Tweetbutton follow')
   );
   return $blocks;
 }
@@ -125,8 +131,13 @@ function tweetbutton_block_info() {
  */
 function tweetbutton_block_view($delta = '') {
   if ($delta == 'tweetbutton') {
-    $block['subject'] = t('Tweetbutton');
+    $block['subject'] = t('Tweetbutton tweet');
     $block['content'] = theme('tweetbutton_display');
+    return $block;
+  }
+  elseif ($delta == 'tweetbutton_follow') {
+    $block['subject'] = t('Tweetbutton follow');
+    $block['content'] = theme('tweetbutton_follow_display');
     return $block;
   }
 }
@@ -198,5 +209,48 @@ function theme_tweetbutton_display($variables) {
   $tweet_link = l(t('Tweet'), 'http://twitter.com/share', array('attributes' => $attributes, 'external' => TRUE));
   $link = '<div class="tweetbutton">' . $tweet_link . '</div>';
 
+  return $link;
+}
+
+
+
+function tweetbutton_follow_get_attributes($options) {
+  global $language;
+  $default_options = array(
+   'show_count' => variable_get('tweetbutton_follow_show_count', TRUE),
+   'show_screen_name' => variable_get('tweetbutton_follow_screen_name'),
+   'size' => variable_get('tweetbutton_follow_size'),
+   'language' => variable_get('tweetbutton_language'),
+  );
+
+  $options += $default_options;
+
+  $attributes = array(
+    'data-show-count' => $options['show_count']? 'true': 'false',
+    'data-show-screen-name' => $options['show_screen_name'],
+    'data-size' => $options['size'],
+    'data-lang' => $options['language'] == 'auto' ? $language->language : $options['language'],
+    'class' => 'twitter-follow-button',
+  );
+  return $attributes;
+}
+
+function theme_tweetbutton_follow_display($variables) {
+  $script_url = url('http://platform.twitter.com/widgets.js', array('external' => TRUE, 'https' => TRUE));
+  drupal_add_js($script_url, array('type' => 'external', 'scope' => 'footer'));
+
+  $options = $variables['options'];
+  $screen_name = $variables['screen_name'];
+  if (empty($screen_name)) {
+    $screen_name = variable_get('tweetbutton_follow_screen_name');
+  }
+  $follow_user_text = isset($options['tweetbutton_label'])? $options['tweetbutton_label']: t('Follow !screen_name', array('!screen_name' => $screen_name));
+
+  $twitter_account_link = 'http://twitter.com/' . $screen_name;
+
+  $attributes = tweetbutton_follow_get_attributes($options);
+
+  $follow_link = l($follow_user_text, $twitter_account_link,array('attributes' => $attributes, 'external' => TRUE, 'https' => TRUE));
+  $link = '<div class="tweetbutton-follow tweetbutton">' . $follow_link . '</div>';
   return $link;
 }

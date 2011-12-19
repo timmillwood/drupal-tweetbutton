@@ -71,6 +71,33 @@ function tweetbutton_admin_settings() {
     '#default_value' => variable_get('tweetbutton_rel_account_description'),
   );
 
+  $form['follow_button'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Follow button settings'),
+  );
+
+  $form['follow_button']['tweetbutton_follow_show_count'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show follow count'),
+    '#default_value' => variable_get('tweetbutton_follow_show_count', TRUE),
+  );
+
+  $form['follow_button']['tweetbutton_follow_screen_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Screen name to follow'),
+    '#default_value' => variable_get('tweetbutton_follow_screen_name'),
+  );
+
+  $form['follow_button']['tweetbutton_follow_size'] = array(
+    '#title' => t('Tweetbutton size'),
+    '#type' => 'select',
+    '#options' => array(
+      'medium' => t('Medium'),
+      'large' => t('Large'),
+  ),
+  '#default_value' => variable_get('tweetbutton_follow_size'),
+  );
+  
   return system_settings_form($form);
 }
 
