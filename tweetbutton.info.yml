@@ -1,0 +1,4 @@
+name: Tweet Button
+type: module
+description: 'Adds the Tweet button'
+core: 8.x
